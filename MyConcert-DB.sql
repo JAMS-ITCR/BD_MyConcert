@@ -7,7 +7,7 @@ Create table Usuario (
 	/* Primer apellido del usuario */
 	Apellido1 varchar(30) not null,
 	/* Segundo apellido del usuario */
-	Apellido2 varchar(100) not null,
+	Apellido2 varchar(30) not null,
 	/* Correo Electrónico del usuario */
 	CorreoElectronico varchar(50) not null,
 	/* Fecha y hora en la que el usuario se está registrando en el sistema */
@@ -19,7 +19,9 @@ Create table Usuario (
 	/* Identificador del rol que tiene el usuario (Administrador o Fanático) referenciado a la tabla Rol */
 	IdRol int not null,
 	/* Estado del usuario (activo, inactivo) */
-	Estado bit not null
+	Estado bit not null,
+	/* Indicador de una sesión activa en el sistema para un usuario */
+	SesionActiva bit not null
 )
 
 /* Tabla que especifica los datos adicionales que se guardan para los fanáticos */
@@ -37,7 +39,7 @@ Create table DetalleFanatico (
 	/* Número de teléfono del Fanático */
 	Telefono varchar(15) not null,
 	/* Foto de perfil del Fanático */
-	Foto image, 
+	Foto varchar(max), 
 	/* Breve descripción personal del fanático */
 	DescripcionPersonal varchar(300) not null
 )
@@ -230,6 +232,12 @@ Create table Festival (
 /**/
 alter table Usuario
 add constraint FkUsuario_Rol foreign key(IdRol) references Rol(IdRol)
+/**/
+alter table Usuario
+add constraint UniqueCorreo Unique(CorreoElectronico)
+/**/
+alter table Usuario
+add constraint UniqueNUsuario Unique(NombreUsuario)
 
 /*****************************************************/
 /**/
@@ -454,6 +462,111 @@ create procedure getBandasByIdCategoriaIdCartelera
 			where CategoriaXCartelera.IdCartelera = 2 and CategoriaXCartelera.IdCategoria = 2) as x
 	on Banda.IdBanda = x.IdBanda
 	go
+
+
+	/* Registro */
+	alter procedure Registro
+		@Nombre varchar(30),
+		@Apellido1 varchar(30),
+		@Apellido2 varchar(30),
+		@Correo varchar(100),
+		@NUsuario varchar(30),
+		@Contrasena varchar(8),
+		@IdRol int,
+		@FNacimiento date,
+		@IdPais int,
+		@Ubicacion varchar(100),
+		@Universidad varchar(30),
+		@Telefono varchar(15),
+		@Foto varchar(max),
+		@Descripcion varchar(300)
+		as
+		begin
+		if @IdRol = 1
+			insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
+			@Contrasena, @IdRol, 1, 1);
+		else
+			begin
+			insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
+			@Contrasena, @IdRol, 1, 1);
+			declare @IdUsuario int
+			select @IdUsuario = Usuario.IdUsuario from Usuario
+			where Usuario.NombreUsuario = @NUsuario and Usuario.Contraseña = @Contrasena;
+			insert into DetalleFanatico values(@IdUsuario, @FNacimiento, @IdPais, @Ubicacion, @Universidad, 
+			@Telefono, @Foto, @Descripcion);
+			end
+		end
+		go
+/*
+execute Registro @Nombre = 'Malcolm',
+		@Apellido1 = 'Davis',
+		@Apellido2 = 'Steele',
+		@Correo = 'malcolm.davis@gmail.com',
+		@NUsuario = 'malkam03',
+		@Contrasena = 'AmoARaven',
+		@IdRol = 2,
+		@FNacimiento = '1995-03-17',
+		@IdPais = 1,
+		@Ubicacion = 'Cartago',
+		@Universidad = 'ITCR',
+		@Telefono = '88888888',
+		@Foto = null,
+		@Descripcion = 'Persona amigable amante del rap'
+*/
+
+/* Login Usuario */
+create procedure LoginUsuario
+	@Usuario varchar(50),
+	@Contraseña varchar(8)
+	as
+	begin
+	declare @IdUsuario int
+	declare @IdRolUsuario int
+	declare @SesionActivaUsuario bit
+	select @IdUsuario = Usuario.IdUsuario, @IdRolUsuario = Usuario.IdRol, @SesionActivaUsuario = Usuario.SesionActiva from Usuario
+	where (Usuario.NombreUsuario = @Usuario or Usuario.CorreoElectronico = @Usuario)
+			and Usuario.Contraseña = @Contraseña
+	if @IdUsuario > 0	
+				begin
+				if @SesionActivaUsuario = 0
+					begin
+					update Usuario set SesionActiva = 1
+					where IdUsuario = @IdUsuario
+					print @IdRolUsuario
+					end
+				else
+					begin
+					print 'El Usuario ya tiene una sesión activa'
+					return
+					end
+				end
+	else
+		begin
+		print @IdUsuario
+		print 'El Usuario y la contraseña no coinciden'
+		end			
+	end
+	go
+
+/* Cerrar sesión de usuario */
+create procedure CerrarSesionUsuario
+	@IdUsuario int
+	as
+	begin
+	update Usuario set Usuario.SesionActiva = 0
+	where Usuario.IdUsuario = @IdUsuario
+	end
+	go
+
+
+
+
+
+
+
+
+
+
 
 	execute getBandasByIdCategoriaIdCartelera @IdCartelera = 1, @IdCategoria = 1
 
