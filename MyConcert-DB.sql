@@ -482,18 +482,37 @@ create procedure getBandasByIdCategoriaIdCartelera
 		@Descripcion varchar(300)
 		as
 		begin
-		if @IdRol = 1
-			insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
-			@Contrasena, @IdRol, 1, 1);
+		if exists(select * from Usuario where CorreoElectronico = @Correo)
+			begin
+			/*print 'Correo registrado'*/
+			return 101;
+			end
+		if exists (select * from Usuario where NombreUsuario = @NUsuario)
+			begin
+			/*print 'NUsuario no disponible'*/
+			return 102;
+			end
 		else
 			begin
-			insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
-			@Contrasena, @IdRol, 1, 1);
-			declare @IdUsuario int
-			select @IdUsuario = Usuario.IdUsuario from Usuario
-			where Usuario.NombreUsuario = @NUsuario and Usuario.Contraseña = @Contrasena;
-			insert into DetalleFanatico values(@IdUsuario, @FNacimiento, @IdPais, @Ubicacion, @Universidad, 
-			@Telefono, @Foto, @Descripcion);
+			if @IdRol = 1
+				begin
+				insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
+				@Contrasena, @IdRol, 1, 1);
+				/*print 'Admin registrado'*/
+				return 100;
+				end
+			else
+				begin
+				insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
+				@Contrasena, @IdRol, 1, 1);
+				declare @IdUsuario int
+				select @IdUsuario = Usuario.IdUsuario from Usuario
+				where Usuario.NombreUsuario = @NUsuario and Usuario.Contraseña = @Contrasena;
+				insert into DetalleFanatico values(@IdUsuario, @FNacimiento, @IdPais, @Ubicacion, @Universidad, 
+				@Telefono, @Foto, @Descripcion);
+				/*print 'Fanático registrado'*/
+				return 100;
+				end
 			end
 		end
 		go
@@ -532,18 +551,25 @@ create procedure LoginUsuario
 					begin
 					update Usuario set SesionActiva = 1
 					where IdUsuario = @IdUsuario
-					print @IdRolUsuario
+					if @IdRolUsuario = 1
+						begin
+						return 103;
+						end
+					if @IdRolUsuario = 2
+						begin
+						return 104;
+						end
 					end
 				else
 					begin
-					print 'El Usuario ya tiene una sesión activa'
-					return
+					/*print 'El Usuario ya tiene una sesión activa'*/
+					return 105;
 					end
 				end
 	else
 		begin
-		print @IdUsuario
-		print 'El Usuario y la contraseña no coinciden'
+		/*print 'El Usuario y la contraseña no coinciden'*/
+		return 106;
 		end			
 	end
 	go
@@ -616,3 +642,8 @@ Execute getBandaById @IdBanda = 1
 
 
 select * from Pais
+
+
+
+
+select * from Usuario
