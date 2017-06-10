@@ -594,17 +594,6 @@ create procedure CerrarSesionUsuario
 
 
 
-	execute getBandasByIdCategoriaIdCartelera @IdCartelera = 1, @IdCategoria = 1
-
-
-
-
-
-
-
-
-
-
 
 
 
