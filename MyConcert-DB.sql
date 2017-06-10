@@ -205,10 +205,6 @@ Create table Festival (
 	IdFestival int identity(1,1) primary key,
 	/* Nombre del Festival */
 	Nombre varchar(100) not null,
-	/* Referencia al identificador del país donde se realizará el festival */
-	IdPais int not null,
-	/* Nombre del lugar donde se hará el festival */
-	Lugar varchar(100) not null,
 	/* Fecha de Inicio del Festival */
 	FechaInicio datetime not null,
 	/* Fecha de finalización del festival */
@@ -326,6 +322,10 @@ add constraint FkFestival_Pais foreign key(IdPais) references Pais(IdPais)
 /**/
 alter table Festival
 add constraint FkFestival_Banda foreign key(IdBanda) references Banda(IdBanda)
+/**/
+alter table Festival
+add constraint FkFestival_Cartelera foreign key(IdCartelera) references Cartelera(IdCartelera)
+
 
 
 /**********************/

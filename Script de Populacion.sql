@@ -7,7 +7,8 @@ Insert into Rol values('Administrador', 'Adminisrador de la aplicación');
 Insert into Rol values('Fanático', 'Fanático de los festivales');
 
 /* Inserts de la tabla Usuario */
-Insert into Usuario values ('Juan', 'Navarro', 'Camacho', 'jnavcamacho@gmail.com', getdate(),'Teby','AmoAOMI',1,1);
+Insert into Usuario values ('Juan', 'Navarro', 'Camacho', 'jnavcamacho@gmail.com', getdate(),'Teby','AmoAOMI',1 ,1 ,1);
+Insert into Usuario values ('Juan', 'Navarro', 'Camacho', 'test@gmail.com', getdate(),'test','test', 1, 1, 1);
 
 /* Inserts de la tabla Géneros */
 Insert into GeneroMusical values('Metal');
@@ -27,4 +28,24 @@ Select * from Banda
 join GeneroMusical on Banda.IdGenero = GeneroMusical.IdGenero
 where GeneroMusical.Nombre = 'Rap'
 
+
+/* Inserts de la tabla Categoria */
+Insert into Categoria values ('Amantes del Rock', 'Para todos los amantes del rock', 1);
+Insert into Categoria values ('Amantes del Rap', 'Para todos los amantes del rap', 1);
+
+/* Inserts de la tabla Cartelera */
+Insert into Cartelera values('Rock Imperial', 1, 'Palmares', '2017-07-04 01:37:30.823', 1)
+
+/* Inserts de la tabla CategoriaXCartelera */
+Insert into CategoriaXCartelera values(1,1)
+Insert into CategoriaXCartelera values(2,1)
+
+/* Inserts de la tabla BandaXCategoriaXCartelera */
+
+
+
 delete from Catalogo where Nombre = 'Administrador'
+
+select * from Cartelera
+select * from Categoria
+select * from Banda
