@@ -335,6 +335,9 @@ add constraint FkBandaXCategoriaXCartelera_CategoriaXCartelera foreign key(IdCat
 /**/
 alter table BandaXCategoriaXCartelera
 add constraint FkBandaXCategoriaXCartelera_Banda foreign key(IdBanda) references Banda(IdBanda)
+/**/
+alter table BandaXCategoriaXCartelera
+add constraint UniqueBandaXCategoria Unique(IdCategoriaXCartelera, IdBanda)
 
 /*****************************************************/
 /**/

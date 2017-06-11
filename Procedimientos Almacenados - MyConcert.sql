@@ -230,6 +230,46 @@ create procedure asignarCategoriaCartelera
 	end
 	go
 
+/* Asignar una Banda a Una categoría que fue asignada a una cartelera */
+create procedure asignarBandaCategoriaCartelera
+	@IdCategoria int,
+	@IdCartelera int,
+	@IdBanda int
+	as
+	begin
+	if exists (select * from Categoria where Categoria.IdCategoria = @IdCategoria)
+		begin
+		if exists(select * from Cartelera where Cartelera.IdCartelera = @IdCartelera)
+			begin 
+			if exists(select * from Banda where Banda.IdBanda = @IdBanda)
+				begin
+				declare @IdCategoriaXCartelera int
+				select @IdCategoriaXCartelera = IdCategoriaXCartelera from CategoriaXCartelera 
+				where CategoriaXCartelera.IdCartelera = @IdCartelera and CategoriaXCartelera.IdCategoria = @IdCategoria
+				if @IdCategoriaXCartelera > 0
+					begin
+					begin try
+					insert into BandaXCategoriaXCartelera values(@IdCategoria, @IdCartelera)
+					return 100;
+					end try
+					begin catch
+					return 101;
+					end catch
+					end
+				else
+					return 105
+				end
+			else
+				return 104;
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
 
 	
 /* Obtener todas las Carteleras */
@@ -291,6 +331,42 @@ create procedure getDetalleFestival
 	end
 	go
 
+/* Crear banda */
+create procedure crearBanda
+	@NBanda varchar(100),
+	@IdGenero int
+	as
+	begin
+	if not exists(select * from Banda where Banda.Nombre = @NBanda)
+		begin
+		if exists (select * from GeneroMusical where IdGenero = @IdGenero)
+			begin
+			begin try
+			insert into Banda values(@NBanda, 0,@IdGenero)
+			return 100;
+			end try
+			begin catch
+			return 101
+			end catch
+			end
+		else
+			begin
+			return 102;
+			end
+		end
+	else
+		return 103;
+	end
+	go
+
+/* Asignar Miembros a una Banda */
+
+
+
+/* Obtener todas las Bandas */
+create procedure getBandas
+	@IdBanda int
+	
 
 
 
