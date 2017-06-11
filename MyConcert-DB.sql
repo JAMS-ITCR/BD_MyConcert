@@ -199,6 +199,18 @@ Create table BandaXCategoriaXCartelera (
 	IdBanda int not null
 )
 
+/* Tabla para el control de las votaciones */
+Create table ControlVotaciones(
+	/* Referencia al identificador de la tabla CategoriaXCartelera */
+	IdCategoriaXCartelera int not null,
+	/* Identificador de la Banda*/
+	IdBanda int not null,
+	/* Identificador del Usuario */
+	IdUsuario int not null
+	/* Monto que el Usuario está asignando */
+	Monto int not null
+)
+
 /* Tabla para los Festivales creados en el sistema */
 Create table Festival (
 	/* Identificador único autoincremental para cada Festival */
@@ -222,6 +234,9 @@ Create table Festival (
 	/* Estado del festival */
 	Estado bit not null
 )
+
+
+
 
 
 /*****************************************************/
@@ -314,6 +329,18 @@ add constraint FkBandaXCategoriaXCartelera_CategoriaXCartelera foreign key(IdCat
 /**/
 alter table BandaXCategoriaXCartelera
 add constraint FkBandaXCategoriaXCartelera_Banda foreign key(IdBanda) references Banda(IdBanda)
+
+/*****************************************************/
+/**/
+alter table ControlVotaciones
+add constraint FkControlVotaciones_CategoriaXCartelera foreign key(IdCategoriaXCartelera) references CategoriaXCartelera(IdCategoriaXCartelera)
+/**/
+alter table ControlVotaciones
+add constraint FkControlVotaciones_Banda foreign key(IdBanda) references Banda(IdBanda)
+/**/
+alter table ControlVotaciones
+add constraint FkControlVotaciones_Usuario foreign key(IdUsuario) references(IdUsuario)
+
 
 /*****************************************************/
 /**/
