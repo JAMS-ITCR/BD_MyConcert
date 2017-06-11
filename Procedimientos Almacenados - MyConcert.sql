@@ -359,10 +359,6 @@ create procedure crearBanda
 	end
 	go
 
-/* Asignar Miembros a una Banda */
-
-
-
 /* Obtener todas las Bandas */
 create procedure getBandas
 	as
@@ -404,6 +400,54 @@ create procedure asignarMiembroBanda
 		end
 	else
 		return 102;
+	end
+	go
+
+
+/* Crear comentario */
+create procedure crearComentario
+	@IdUsuario int,
+	@IdBanda int,
+	@Rating int,
+	@Contenido varchar(500)
+	as
+	begin
+	if exists (select * from Usuario where Usuario.IdUsuario = @IdUsuario)
+		begin
+		if exists (select * from Banda where Banda.IdBanda = @IdBanda)
+			begin
+			if 0 < @Rating and @Rating < 5
+				begin
+				begin try
+				insert into Comentario values (@IdUsuario, @IdBanda, @Rating, @Contenido, getdate(), 1)
+				return 100;
+				end try
+				begin catch
+				return 101;
+				end catch
+				end
+			else
+				return 104;
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+	/* Obtener todos los comentarios para una banda by Id */
+create procedure getComentariosBanda 
+	@IdBanda int
+	as
+	begin
+	if exists (select * from Banda where Banda.IdBanda = @IdBanda)
+		begin
+		select * from Comentario where IdBanda = @IdBanda
+		end
+	else
+		return 101;
 	end
 	go
 
