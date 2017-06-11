@@ -365,9 +365,47 @@ create procedure crearBanda
 
 /* Obtener todas las Bandas */
 create procedure getBandas
-	@IdBanda int
+	as
+	begin
+	select * from Banda
+	end
+	go
 	
 
+/* Obtener banda mediante Id */
+create procedure getBandaById
+	@IdBanda int
+	as
+	begin
+	if exists(select * from Banda where Banda.IdBanda = @IdBanda)
+		begin
+		select * from Banda where Banda.IdBanda = @IdBanda
+		end
+	else
+		return 101;
+	end 
+	go
+
+/* Asignar miembro a una Banda */
+create procedure asignarMiembroBanda
+	@NMiembro varchar(100),
+	@IdBanda int
+	as
+	begin
+	if exists(select * from Banda where Banda.IdBanda = @IdBanda)
+		begin
+		begin try
+		insert into MiembroBanda values(@NMiembro, @IdBanda)
+		return 100;
+		end try
+		begin catch
+		return 101;
+		end catch
+		end
+	else
+		return 102;
+	end
+	go
 
 
 /* Obtener las categorías y las bandas por Nombre de Cartelera
