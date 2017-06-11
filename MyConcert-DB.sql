@@ -164,6 +164,10 @@ Create table Cartelera (
 	Lugar varchar(100) not null,
 	/* Fecha y hora a la cuál las votaciones cerrarán */
 	CierreVotacion datetime not null,
+	/* Fecha de Inicio del Festival */
+	FechaInicio datetime not null,
+	/* Fecha de finalización del festival */
+	FechaFinal datetime not null,
 	/* Estado de la cartelera */
 	Estado bit not null
 )
@@ -217,10 +221,6 @@ Create table Festival (
 	IdFestival int identity(1,1) primary key,
 	/* Nombre del Festival */
 	Nombre varchar(100) not null,
-	/* Fecha de Inicio del Festival */
-	FechaInicio datetime not null,
-	/* Fecha de finalización del festival */
-	FechaFinal datetime not null,
 	/* Detalles acerca del transporte */
 	Transporte varchar(500) not null,
 	/* Detalles acerca de la comida */
