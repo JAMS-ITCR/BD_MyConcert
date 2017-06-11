@@ -178,6 +178,59 @@ create procedure getGeneros
 	end
 	go
 
+/* Crear Cartelera */
+create procedure crearCartelera 
+	@Nombre varchar(100),
+	@IdPais int,
+	@Lugar varchar(100),
+	@CierreVotacion datetime,
+	@FechaInicio datetime,
+	@FechaFinal datetime,
+	@Estado bit
+	as
+	begin
+	if exists (select * from Cartelera where Cartelera.Nombre = @Nombre)
+		begin
+		begin try
+		insert into Cartelera values(@Nombre, @IdPais, @Lugar, @CierreVotacion, @FechaInicio, @FechaFinal, @Estado)
+		return 100;
+		end try
+		begin catch
+		return 101;
+		end catch
+		end
+	else
+		return 102;
+	end
+	go
+
+/* Asignar una Categoria a una Cartelera */
+create procedure asignarCategoriaCartelera
+	@IdCategoria int,
+	@IdCartelera int
+	as
+	begin
+	if exists (select * from Categoria where Categoria.IdCategoria = @IdCategoria)
+		begin
+		if exists(select * from Cartelera where Cartelera.IdCartelera = @IdCartelera)
+			begin 
+			begin try
+			insert into CategoriaXCartelera values(@IdCategoria, @IdCartelera)
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+
 	
 /* Obtener todas las Carteleras */
 create procedure getCarteleras
@@ -197,6 +250,22 @@ create procedure getCartelerasActivas
 	go
 
 
+/* Obtener detalles de la cartelera */
+create procedure getDetalleCartelera
+	@IdCartelera int
+	as
+	begin
+	if exists (select * from Cartelera where IdCartelera = @IdCartelera)
+		begin
+		select * from Cartelera 
+		where IdCartelera = @IdCartelera
+		end  
+	else
+		return 101;
+	end
+	go
+
+
 /* Obtener todos los Festivales */
 create procedure getFestivales
 	as
@@ -206,7 +275,26 @@ create procedure getFestivales
 	go
 
 
-/* Obtener las categorías y las bandas por Nombre de Cartelera */
+/* Obtener detalle de festival */
+create procedure getDetalleFestival
+	@IdFestival int
+	as
+	begin
+	if exists (select * from Festival where IdFestival = @IdFestival)
+		begin
+		select IdFestival, Festival.Nombre, IdPais, Lugar, FechaInicio, FechaFinal, Transporte, Comida, Servicios, IdBanda, Festival.Estado from Festival 
+		join Cartelera on Festival.IdCartelera = Cartelera.IdCartelera
+		where Festival.IdCartelera = @IdFestival
+		end  
+	else
+		return 101;
+	end
+	go
+
+
+
+
+/* Obtener las categorías y las bandas por Nombre de Cartelera
 create procedure getBandasXCategoriaXCartelera
 	@NCartelera varchar(100)
 	as
@@ -230,8 +318,10 @@ create procedure getBandasXCategoriaXCartelera
 
 	declare @result int
 	exec @result = getBandasXCategoriaXCartelera 'Rock Imperial'
-	select @result
+	select @result*/
 
+
+/* Realizar Votación */
 alter procedure HacerVotacion
 	@data nvarchar(max)
 	as

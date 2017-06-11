@@ -313,6 +313,9 @@ add constraint UniqueComentarioUsuarioXBanda unique(IdUsuario, IdBanda)
 /**/
 alter table Cartelera
 add constraint FkCartelera_Pais foreign key(IdPais) references Pais(IdPais)
+/**/
+alter table Cartelera
+add constraint UniqueNombre Unique(Nombre)
 
 /*****************************************************/
 /**/
@@ -321,6 +324,9 @@ add constraint FkCategoriaXCartelera_Categoria foreign key(IdCategoria) referenc
 /**/
 alter table CategoriaXCartelera 
 add constraint FkCategoriaXCartelera_Cartelera foreign key(IdCartelera) references Cartelera(IdCartelera)
+/**/
+alter table CategoriaXCartelera 
+add constraint UniqueCategoriaXCartelera unique(IdCategoria, IdCartelera)
 
 /*****************************************************/
 /**/
