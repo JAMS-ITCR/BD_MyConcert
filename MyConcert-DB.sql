@@ -340,6 +340,9 @@ add constraint FkControlVotaciones_Banda foreign key(IdBanda) references Banda(I
 /**/
 alter table ControlVotaciones
 add constraint FkControlVotaciones_Usuario foreign key(IdUsuario) references(IdUsuario)
+/**/
+alter table ControlVotaciones
+add constraint UniqueVotacion unique(IdCategoriaXCartelera, IdBanda, IdUsuario)
 
 
 /*****************************************************/
