@@ -41,11 +41,20 @@ Insert into CategoriaXCartelera values(1,1)
 Insert into CategoriaXCartelera values(2,1)
 
 /* Inserts de la tabla BandaXCategoriaXCartelera */
+Insert into BandaXCategoriaXCartelera values (1,1,0);
+Insert into BandaXCategoriaXCartelera values (1,2,0);
+Insert into BandaXCategoriaXCartelera values (2,3,0);
+Insert into BandaXCategoriaXCartelera values (2,4,0);
+
+
+
+delete from BandaXCategoriaXCartelera
+select * from BandaXCategoriaXCartelera
 
 
 
 delete from Catalogo where Nombre = 'Administrador'
 
 select * from Cartelera
-select * from Categoria
+select * from CategoriaXCartelera
 select * from Banda

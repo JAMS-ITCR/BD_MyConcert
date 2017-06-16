@@ -66,10 +66,10 @@ Create table Banda (
 	IdBanda int identity(1,1) primary key,
 	/* Nombre de la banda/artista */
 	Nombre varchar(100) not null,
-	/* Promedio de los ratings dados por los fanáticos en sus comentarios */
-	PromedioRating int not null,
 	/* Identificador del género de la Banda/artista */
 	IdGenero int not null
+	/* Descripción */
+	DescripcionBanda varchar(300) not null
 )
 
 /* Tabla para las personas que conforman una banda (miembros) */
@@ -104,18 +104,24 @@ Create table Cancion (
 	/* Vínculo del preview de la canción */
 	Preview varchar(100) not null,
 	/* Imagen de la canción */
-	Imagen image not null,
+	Imagen nvarchar(max) not null,
 	/* Fecha de creación de la canción */
-	FechaCreacion datetime not null,
-	/* Identificador de la banda a la que se asocia la canción */
 	IdBanda int not null,
-	/* Identificador del Género de la canción */
-	IdGenero int not null,
 	/* Identificador del álbum al que pertenece la canción */
 	IdAlbum int not null,
 	/* Estado de la canción */
 	Estado bit not null
 )
+
+Create table ImagenBanda (
+	/* Identificador único autoincremental para cada imagen */
+	IdImagenBanda int identity(1,1) primary key,
+	/* Identificador de la Banda */
+	Idbanda int not null,
+	/* Url de la imagen */
+	UrlImageN varchar(200) not null,
+)
+
 
 Create table Comentario (
 	/* Identificador único autoincremental para cada comentario */
@@ -133,6 +139,7 @@ Create table Comentario (
 	/* Estado del comentario (activo, inactivo) */
 	Estado bit not null
 )
+
 
 /* Tabla que almecenará los países que soporta el sistema */
 Create table Pais (
@@ -265,6 +272,9 @@ add constraint FkGeneroXUsuario_GeneroMusical foreign key(IdGenero) references G
 /**/
 alter table GeneroXUsuario
 add constraint FkGeneroXUsuario_Usuario foreign key(IdUsuario) references Usuario(IdUsuario)
+/**/
+alter table GeneroXUsuario
+add constraint UniqueGeneroXUsuario unique(IdGenero, IdUsuario)
 
 /*****************************************************/
 /**/
@@ -290,13 +300,18 @@ add constraint UniqueAlbumXBanda unique(IdAlbum, IdBanda)
 /*****************************************************/
 /**/
 alter table Cancion
-add constraint FkCancion_Genero foreign key(IdGenero) references GeneroMusical(IdGenero)
-/**/
-alter table Cancion
 add constraint FkCancion_Banda foreign key(IdBanda) references Banda(IdBanda)
 /**/
 alter table Cancion
-add constraint UniqueCancionBanda unique(IdCancion, IdBanda)
+add constraint UniqueCancionBanda unique(Nombre, IdBanda)
+
+/*****************************************************/
+/**/
+alter table ImagenBanda 
+add constraint FkImagenBanda_Banda foreign key(IdBanda) references Banda(IdBanda);
+/**/
+alter table ImagenBanda
+add constraint UniqueImagenBanda unique(IdBanda, UrlImagen)
 
 /*****************************************************/
 /**/

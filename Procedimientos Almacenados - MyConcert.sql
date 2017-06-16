@@ -30,13 +30,19 @@
 			begin
 			if @IdRol = 1
 				begin
+				begin try
 				insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
 				@Contrasena, @IdRol, 1, 1);
 				/*print 'Admin registrado'*/
 				return 100;
+				end try
+				begin catch
+				return 103;
+				end catch
 				end
 			else
 				begin
+				begin try
 				insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
 				@Contrasena, @IdRol, 1, 1);
 				declare @IdUsuario int
@@ -46,6 +52,10 @@
 				@Telefono, @Foto, @Descripcion);
 				/*print 'Fanático registrado'*/
 				return 100;
+				end try
+				begin catch
+				return 103;
+				end catch
 				end
 			end
 		end
@@ -189,7 +199,7 @@ create procedure crearCartelera
 	@Estado bit
 	as
 	begin
-	if exists (select * from Cartelera where Cartelera.Nombre = @Nombre)
+	if not exists (select * from Cartelera where Cartelera.Nombre = @Nombre)
 		begin
 		begin try
 		insert into Cartelera values(@Nombre, @IdPais, @Lugar, @CierreVotacion, @FechaInicio, @FechaFinal, @Estado)
@@ -249,7 +259,7 @@ create procedure asignarBandaCategoriaCartelera
 				if @IdCategoriaXCartelera > 0
 					begin
 					begin try
-					insert into BandaXCategoriaXCartelera values(@IdCategoria, @IdCartelera)
+					insert into BandaXCategoriaXCartelera values(@IdCategoriaXCartelera, @IdBanda, 0)
 					return 100;
 					end try
 					begin catch
@@ -334,7 +344,8 @@ create procedure getDetalleFestival
 /* Crear banda */
 create procedure crearBanda
 	@NBanda varchar(100),
-	@IdGenero int
+	@IdGenero int,
+	@Descripcion varchar(300)
 	as
 	begin
 	if not exists(select * from Banda where Banda.Nombre = @NBanda)
@@ -342,7 +353,7 @@ create procedure crearBanda
 		if exists (select * from GeneroMusical where IdGenero = @IdGenero)
 			begin
 			begin try
-			insert into Banda values(@NBanda, 0,@IdGenero)
+			insert into Banda values(@NBanda,@IdGenero, @Descripcion)
 			return 100;
 			end try
 			begin catch
@@ -358,6 +369,53 @@ create procedure crearBanda
 		return 103;
 	end
 	go
+
+/* Actualizar una Banda */
+create procedure updateBanda
+	@IdBanda int,
+	@Descripcion varchar(300),
+	@Estado bit
+	as
+	begin
+	if exists(select * from Banda where IdBanda = @IdBanda)
+		begin
+		begin try
+		update Banda set DescripcionBanda = @Descripcion, Estado = @Estado where IdBanda = @IdBanda
+		return 100;
+		end try
+		begin catch 
+		return 101;
+		end catch
+		end
+	else
+		return 102;
+	end
+	go
+
+	/* Actualizar el estado de la banda */
+create procedure updateEstadoBanda 
+	@IdBanda int,
+	@Estado bit
+	as
+	begin
+	if exists(select * from Banda where IdBanda = @IdBanda)
+		begin
+		begin try
+		update Banda set Estado = @Estado where IdBanda = @IdBanda
+		return 100;
+		end try
+		begin catch
+		return 101;
+		end catch
+		end
+	else
+		return 102;
+	end
+	go
+
+
+
+
 
 /* Obtener todas las Bandas */
 create procedure getBandas
@@ -400,6 +458,192 @@ create procedure asignarMiembroBanda
 		end
 	else
 		return 102;
+	end
+	go
+
+/* Eliminar un miembro de una banda */
+create procedure eliminarMiembroBanda
+	@IdBanda int,
+	@IdMiembro
+	as
+	begin
+	if exists(select * from Banda where IdBanda = @IdBanda)
+		begin
+		if exists(select * from MiembroBanda where IdMiembroBanda = @IdMiembro)
+			begin
+			begin try
+			delete from MiembroBanda where IdMiembroBanda = @IdMiembro
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+
+/* Obtener todos los miembros de una Banda */
+create procedure getMiembrosByBandaId
+	@IdBanda int
+	as
+	begin
+	if exists (select * from Banda where IdBanda = @IdBanda)
+		begin
+		if exists (select * from MiembroBanda where IdBanda = @IdBanda)
+			begin
+			select * from MiembroBanda where IdBanda = @IdBanda
+			end
+		return 102;
+		end
+	else
+		return 101;
+	end
+	go
+
+/* Agregar una imagen a una Banda */
+create procedure addImagenBanda 
+	@IdBanda int,
+	@UrlImagen varchar(200)
+	as
+	begin
+	if exists (select * from Banda where IdBanda = @IdBanda)
+		begin
+		if not exists (select * from ImagenBanda where UrlImagen = @UrlImagen)
+			begin
+			begin try 
+			insert into ImagenBanda values(@IdBanda, @UrlImagen)
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 103;
+		end
+	else
+		return 102;
+	end 
+	go
+
+/* Eliminar una imagen de una banda */
+create procedure eliminarImagenBanda 
+	@IdBanda int,
+	@IdImagen int
+	as
+	begin
+	if exists (select * from Banda where IdBanda = @IdBanda)
+		begin
+		if exists (select * from ImagenBanda where IdImagenBanda = @IdImagen and IdBanda = @IdBanda)
+			begin
+			begin try
+			delete from ImagenBanda where IdImagenBanda = @IdImagen and IdBanda = @IdBanda
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+/* Añadir una canción  a una banda */
+create procedure addCancionBanda
+	@NCancion varchar(100),
+	@Preview varchar(100),
+	@Imagen nvarchar(max),
+	@IdBanda int,
+	@IdAlbum int,
+	@Estado bit
+	as
+	begin
+	if exists (select * from Banda where IdBanda = @IdBanda)
+		begin
+		if not exists (select * from Cancion where IdBanda = @IdBanda and Nombre = @NCancion)
+			begin
+			begin try
+			insert into Cancion values(@NCancion, @Preview, @Imagen, @IdBanda, @IdAlbum, 1)
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+/* Eliminar una canción de una Banda */
+create procedure eliminarCancionBanda
+	@IdBanda int,
+	@IdCancion int
+	as
+	begin
+	if exists(select * from Banda where IdBanda = @IdBanda)
+		begin
+		if exists(select * from Cancion where IdBanda = @IdBanda and IdCancion = @IdCancion)
+			begin
+			begin try
+			delete from Cancion where IdBanda = @IdBanda and IdCancion = @IdCancion
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end go
+
+
+/* Obtener el rating promedio de una banda dado por los fanáticos */
+alter procedure getRatingBanda
+	@IdBanda int
+	as
+	begin
+	if exists (select * from Banda where IdBanda = @IdBanda)
+		begin
+		if (select avg(Rating) from Comentario where IdBanda = @IdBanda) != 0
+			begin
+			select avg(Rating) as Rating from Comentario where IdBanda = @IdBanda
+			end
+		else
+			return 102;
+		end
+	else
+		return 101;
+	end
+	go
+
+/* Obtener Acumulado */
+create procedure getAcumuladoBanda
+	@IdBanda int
+	as
+	begin
+	if exists (select * from Banda where IdBanda = @IdBanda)
+		begin
+		select sum(Monto) from ControlVotaciones where IdBanda = @IdBanda
+		end
+	else
+		return 101
 	end
 	go
 
@@ -451,32 +695,35 @@ create procedure getComentariosBanda
 	end
 	go
 
-
-/* Obtener las categorías y las bandas por Nombre de Cartelera
-create procedure getBandasXCategoriaXCartelera
-	@NCartelera varchar(100)
+/* Obtener las categorías y las bandas por Nombre de Cartelera*/
+alter procedure getBandasXCategoriaXCartelera
+	@IdCartelera int
 	as
 	begin
-	declare @IdCartelera int
-	select @IdCartelera = Cartelera.IdCartelera from Cartelera where Cartelera.Nombre = @NCartelera
-	if @IdCartelera > 0
+	if exists (select * from Cartelera where IdCartelera = @IdCartelera)
 		begin
-		select IdCartelera, Categoria.IdCategoria, Categoria.Nombre, Banda.IdBanda, Banda.Nombre, Acumulado from 
-		(Categoria join 
-		(CategoriaXCartelera join 
-		(BandaXCategoriaXCartelera join Banda on BandaXCategoriaXCartelera.IdBanda = Banda.IdBanda) 
-		on CategoriaXCartelera.IdCategoriaXCartelera = BandaXCategoriaXCartelera.IdCategoriaXCartelera)
-		on Categoria.IdCategoria = CategoriaXCartelera.IdCategoria)
-		where CategoriaXCartelera.IdCartelera = @IdCartelera
+		if exists(select * from CategoriaXCartelera where IdCartelera = @IdCartelera)
+			begin
+			begin try
+			select IdCartelera, Categoria.IdCategoria, Categoria.Nombre as NombreCategoria, Banda.IdBanda, Banda.Nombre as BandaNombre, Acumulado from 
+			(Categoria join 
+			(CategoriaXCartelera join 
+			(BandaXCategoriaXCartelera join Banda on BandaXCategoriaXCartelera.IdBanda = Banda.IdBanda) 
+			on CategoriaXCartelera.IdCategoriaXCartelera = BandaXCategoriaXCartelera.IdCategoriaXCartelera)
+			on Categoria.IdCategoria = CategoriaXCartelera.IdCategoria)
+			where CategoriaXCartelera.IdCartelera = @IdCartelera
+			end try
+			begin catch
+			return 103;
+			end catch
+			end
+		else
+			return 101;
 		end
 	else
-		return 106;
+		return 102;
 	end
 	go
-
-	declare @result int
-	exec @result = getBandasXCategoriaXCartelera 'Rock Imperial'
-	select @result*/
 
 
 /* Realizar Votación */
@@ -487,11 +734,13 @@ alter procedure HacerVotacion
 	if @data != ''
 		begin
 		begin try
+		begin transaction T1;
 		insert into ControlVotaciones(IdCategoriaXCartelera, IdBanda, IdUsuario, Monto)
 		select IdCategoriaXCartelera, IdBanda, IdUsuario, Monto
 		from openjson(@data)
 		with (IdCategoriaXCartelera int, IdBanda int, IdUsuario int, Monto int)
 		return 100;
+		commit transaction T1;
 		end try
 
 		begin catch 
@@ -502,3 +751,131 @@ alter procedure HacerVotacion
 		return 101
 	end
 	go
+
+/* Obtener la información de un usuario */
+create procedure getInfoUsuario
+	@IdUsuario int,
+	@IdRol int
+	as
+	begin
+	if exists (select * from Usuario where IdUsuario = @IdUsuario)
+		begin 
+		if exists (select * from Rol where IdRol = @IdRol)
+			begin
+			if exists (select * from Usuario where IdUsuario = @IdUsuario and IdRol = @IdRol)
+				begin
+				select * from Usuario where IdUsuario = @IdUsuario and IdRol = @IdRol
+				end
+			else
+				return 101;
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+/* Obtener el detalle de un fanático */
+create procedure getDetalleFanatico
+	@IdUsuario int
+	as
+	begin
+	if exists (select * from Usuario where IdUsuario = @IdUsuario)
+		begin 
+		if exists (select * from Usuario where IdUsuario = @IdUsuario and IdRol = 2)
+			begin
+			select * from Usuario where IdUsuario = @IdUsuario and IdRol = 2
+			end
+		else
+			return 101;
+		end
+	else
+		return 102;
+	end
+	go
+
+/* Asignar géneros a un fanatico */
+create procedure asignarGeneroFanatico
+	@IdUsuario int,
+	@IdGenero int 
+	as
+	begin
+	if exists (select * from Usuario where IdUsuario = @IdUsuario and IdRol = 2)
+		begin
+		if exists(select * from GeneroMusical where IdGenero = @IdGenero)
+			begin
+			begin try
+			insert into GeneroXUsuario values(@IdGenero, @IdUsuario)
+			return 100;
+			end try
+			begin catch
+			return 101;
+			end catch
+			end
+		else
+			return 102;
+		end
+	else
+		return 103;
+	end
+	go
+
+
+	/* Obtener los géneros de un fanático */
+create procedure getGenerosFanatico
+	@IdUsuario int
+	as
+	begin
+	if exists(select * from Usuario where IdUsuario = @IdUsuario)
+		begin
+		select * from GeneroXUsuario where IdUsuario = @IdUsuario
+		end
+	else
+		return 101;
+	end
+	go
+
+
+/* Obtener genero por Id */
+create procedure getGeneroById
+	@IdGenero int
+	as
+	begin
+	if exists(select * from GeneroMusical where IdGenero = @IdGenero)
+		begin
+		select * from GeneroMusical where IdGenero = @IdGenero
+		end
+	else
+		return 101;
+	end
+
+/* Obtener bandas por categoria y cartelera */
+create procedure getBandaXCategoriaXCartelera
+	@IdCategoria int,
+	@IdCartelera int
+	as
+	begin
+	declare @IdCategoriaXCartelera int
+	select @IdCategoriaXCartelera = IdCategoriaXCartelera from CategoriaXCartelera where IdCategoria = @IdCategoria and IdCartelera = @IdCartelera
+	if exists(select * from Cartelera where IdCartelera = @IdCartelera)
+		begin
+		if exists(select * from Categoria where IdCategoria = @Idcategoria)
+			begin
+			if @IdCategoriaXCartelera > 0
+				begin
+				select Banda.IdBanda, Acumulado, Nombre from (BandaXCategoriaXCartelera join Banda on Banda.IdBanda = BandaXCategoriaXCartelera.IdBanda) 
+				where IdCategoriaXCartelera = @IdCategoriaXCartelera
+				end
+			else
+				return 103;
+			end
+		else
+			return 101;
+		end
+	else
+		return 102;
+	end
+	go
+
