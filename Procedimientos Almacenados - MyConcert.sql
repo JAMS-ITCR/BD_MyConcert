@@ -30,32 +30,43 @@
 			begin
 			if @IdRol = 1
 				begin
-				begin try
-				insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
-				@Contrasena, @IdRol, 1, 1);
-				/*print 'Admin registrado'*/
-				return 100;
-				end try
-				begin catch
-				return 103;
-				end catch
+				if @Nombre != '' and @Apellido1 != '' and @Apellido2 != '' and @Correo != '' and @NUsuario != '' and @Contrasena != '' 
+				and @IdRol > 0 and @IdRol < 3
+					begin
+					begin try
+					insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
+					@Contrasena, @IdRol, 1, 1);
+					/*print 'Admin registrado'*/
+					return 100;
+					end try
+					begin catch
+					return 103;
+					end catch
+					end
+				else
+					return 104;
 				end
-			else
+			if @IdRol = 2
 				begin
-				begin try
-				insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
-				@Contrasena, @IdRol, 1, 1);
-				declare @IdUsuario int
-				select @IdUsuario = Usuario.IdUsuario from Usuario
-				where Usuario.NombreUsuario = @NUsuario and Usuario.Contraseña = @Contrasena;
-				insert into DetalleFanatico values(@IdUsuario, @FNacimiento, @IdPais, @Ubicacion, @Universidad, 
-				@Telefono, @Foto, @Descripcion);
-				/*print 'Fanático registrado'*/
-				return 100;
-				end try
-				begin catch
-				return 103;
-				end catch
+				if @Nombre != '' and @Apellido1 != '' and @Apellido2 != '' and @Correo != '' and @NUsuario != '' and @Contrasena != '' 
+				and @IdRol > 0 and @IdRol < 3 and @FNacimiento != '' and @Telefono != '' and @Descripcion != ''
+					begin
+					begin try
+					insert into Usuario values(@Nombre, @Apellido1, @Apellido2, @Correo, getdate(), @NUsuario,
+					@Contrasena, @IdRol, 1, 1);
+					declare @IdUsuario int
+					select @IdUsuario = Usuario.IdUsuario from Usuario
+					where Usuario.NombreUsuario = @NUsuario and Usuario.Contraseña = @Contrasena;
+					insert into DetalleFanatico values(@IdUsuario, @FNacimiento, @IdPais, @Ubicacion, @Universidad, 
+					@Telefono, @Foto, @Descripcion)
+					return 100;
+					end try
+					begin catch
+					return 103;
+					end catch
+					end
+				else
+					return 104;
 				end
 			end
 		end
@@ -280,13 +291,14 @@ create procedure asignarBandaCategoriaCartelera
 	end
 	go
 
-
+	getCarteleras
 	
 /* Obtener todas las Carteleras */
-create procedure getCarteleras
+alter procedure getCarteleras
 	as
 	begin
-	select * from Cartelera
+	select IdCartelera, Nombre, Pais.IdPais, NombrePais, Lugar, CierreVotacion, FechaInicio, FechaFinal, Estado from Cartelera
+	join Pais on Pais.IdPais = Cartelera.IdPais
 	end
 	go
 
@@ -317,10 +329,11 @@ create procedure getDetalleCartelera
 
 
 /* Obtener todos los Festivales */
-create procedure getFestivales
+alter procedure getFestivales
 	as
 	begin
-	select * from Festival
+	select IdFestival, Nombre, IdPais, Lugar, FechaInicio, FechaFinal, Transporte, Comida, Servicios, Festival.IdCartelera, IdBanda, Festival.Estado from Festival
+	join Cartelera on Cartelera.IdCartelera = Festival.IdCartelera
 	end
 	go
 
@@ -640,7 +653,7 @@ create procedure getAcumuladoBanda
 	begin
 	if exists (select * from Banda where IdBanda = @IdBanda)
 		begin
-		select sum(Monto) from ControlVotaciones where IdBanda = @IdBanda
+		select sum(Monto) as Acumulado from ControlVotaciones where IdBanda = @IdBanda
 		end
 	else
 		return 101
@@ -662,13 +675,18 @@ create procedure crearComentario
 			begin
 			if 0 < @Rating and @Rating < 5
 				begin
-				begin try
-				insert into Comentario values (@IdUsuario, @IdBanda, @Rating, @Contenido, getdate(), 1)
-				return 100;
-				end try
-				begin catch
-				return 101;
-				end catch
+				if (select IdRol from Usuario where IdUsuario = @IdUsuario) = 2
+					begin
+					begin try
+					insert into Comentario values (@IdUsuario, @IdBanda, @Rating, @Contenido, getdate(), 1)
+					return 100;
+					end try
+					begin catch
+					return 101;
+					end catch
+					end
+				else
+					return 105;
 				end
 			else
 				return 104;
@@ -680,7 +698,6 @@ create procedure crearComentario
 		return 103;
 	end
 	go
-
 	/* Obtener todos los comentarios para una banda by Id */
 create procedure getComentariosBanda 
 	@IdBanda int
@@ -694,6 +711,7 @@ create procedure getComentariosBanda
 		return 101;
 	end
 	go
+
 
 /* Obtener las categorías y las bandas por Nombre de Cartelera*/
 alter procedure getBandasXCategoriaXCartelera
@@ -786,7 +804,7 @@ create procedure getDetalleFanatico
 		begin 
 		if exists (select * from Usuario where IdUsuario = @IdUsuario and IdRol = 2)
 			begin
-			select * from Usuario where IdUsuario = @IdUsuario and IdRol = 2
+			select * from DetalleFanatico where IdUsuario = @IdUsuario
 			end
 		else
 			return 101;
@@ -879,3 +897,275 @@ create procedure getBandaXCategoriaXCartelera
 	end
 	go
 
+/* Crear un festival a partir de una Cartelera */
+alter procedure crearFestival 
+	@Transporte varchar(500),
+	@Comida varchar(500),
+	@Servicios varchar(500),
+	@IdCartelera int,
+	@IdBanda int,
+	@Estado bit
+	as
+	begin
+	declare @CierreVotacion datetime
+	select @CierreVotacion = CierreVotacion from Cartelera where IdCartelera = @IdCartelera
+	if exists(select * from Cartelera where IdCartelera = @IdCartelera)
+		begin
+		if not exists (select * from Festival where IdCartelera = @IdCartelera)
+			begin
+			if datediff(second, @CierreVotacion, getdate()) > 21600
+				begin
+				begin try
+				insert into Festival values(@Transporte, @Comida, @Servicios, @IdCartelera, @IdBanda, @Estado)
+				return 100;
+				end try
+				begin catch
+				return 101;
+				end catch
+				end
+			else
+				return 102;
+			end
+		else
+			return 103;
+		end
+	return 104;
+	end
+	go
+
+/* Obtener preinformación de un Festival */
+alter procedure getPreInfoFestival
+	@IdCartelera int
+	as
+	begin
+	declare @CierreVotacion datetime
+	select @CierreVotacion = CierreVotacion from Cartelera where IdCartelera = @IdCartelera
+	if exists(select * from Cartelera where IdCartelera = @IdCartelera)
+		begin
+		if (select Estado from Cartelera where IdCartelera = @IdCartelera) = 1
+			begin
+			if datediff(second, @CierreVotacion, getdate()) > 21600
+				begin
+				begin try
+				select Nombre, Cartelera.IdPais, NombrePais, Lugar, FechaInicio, FechaFinal from Cartelera join Pais on Pais.IdPais = Cartelera.IdPais
+				where Cartelera.IdCartelera = @IdCartelera
+				end try
+				begin catch
+				return 101;
+				end catch
+				end
+			else
+				return 102;
+			end
+		else
+			return 103;
+		end
+	else
+		return 104;
+	end
+	go
+
+/* Asignar las Categorías y Bandas que fueron de una cartelera a un Festival */
+create procedure asignarBandaCategoriaFestival
+	@IdCartelera int
+	as
+	begin
+	declare @IdFestival int
+	declare @IdCategoria int
+	declare @IdBanda int
+	declare BandasCategoria cursor fast_forward for select CategoriaXCartelera.IdCategoria, BandaXCategoriaXCartelera.IdBanda from CategoriaXCartelera 
+	join BandaXCategoriaXCartelera on CategoriaXCartelera.IdCategoriaXCartelera = BandaXCategoriaXCartelera.IdCategoriaXCartelera
+	where IdCartelera = @IdCartelera;
+	select @IdFestival = IdFestival from Festival where IdCartelera = @IdCartelera
+	if exists(select * from Cartelera where IdCartelera = @IdCartelera)
+		begin
+		if (select Estado from Cartelera where IdCartelera = @IdCartelera) = 1
+			begin
+			if exists(select * from Festival where IdCartelera = @IdCartelera)
+				begin
+				if not exists(select * from (BandaXCategoriaXFestival join Festival on Festival.IdFestival = BandaXCategoriaXFestival.IdFestival)  
+				where Festival.IdCartelera = @IdCartelera)
+					begin
+					begin try
+					open BandasCategoria
+					fetch next from BandasCategoria
+					into @IdCategoria, @IdBanda
+					while @@fetch_status = 0
+						begin
+						insert into BandaXCategoriaXFestival values(@IdFestival, @IdCategoria, @IdBanda)	
+						fetch next from BandasCategoria
+						into @IdCategoria, @IdBanda
+						end
+					close BandasCategoria
+					deallocate BandasCategoria
+					return 100;
+					end try
+					begin catch
+					return 101;
+					end catch
+					end
+				else
+					deallocate BandasCategoria
+					return 105;
+				end
+			else 
+				deallocate BandasCategoria
+				return 102;
+			end
+		else
+			deallocate BandasCategoria
+			return 103;
+		end
+	else
+		deallocate BandasCategoria
+		return 104;
+	end
+	go
+
+	/* Obtener todas las bandas y categorias de un festival */
+create procedure getBandasCategoriasFestival
+	@IdFestival int
+	as
+	begin
+	if exists(select * from Festival where IdFestival = @IdFestival)
+		begin
+		if exists(select * from BandaXCategoriaXFestival where IdFestival = @IdFestival)
+			begin
+			select * from BandaXCategoriaXFestival where IdFestival = @IdFestival
+			end
+		else 
+			return 101;
+		end
+	else
+		return 102;
+	end
+	go
+
+/* Eliminar una banda de un Festival */
+create procedure eliminarBandaFestival
+	@IdFestival int,
+	@IdBanda int
+	as
+	begin
+	declare @IdCategoria int
+	select @IdCategoria = IdCategoria from BandaXCategoriaXFestival where IdFestival = @IdFestival and IdBanda = @IdBanda
+	if exists(select * from Festival where IdFestival = @IdFestival)
+		begin
+		if exists(select * from Banda where IdBanda = @IdBanda)
+			begin
+			if exists(select IdCategoria from BandaXCategoriaXFestival where IdFestival = @IdFestival and IdBanda = @IdBanda)
+				begin
+				if (select count(IdBanda) from BandaXCategoriaXFestival where IdCategoria = @IdCategoria)>1
+					begin
+					begin try
+					delete from BandaXCategoriaXFestival where IdFestival = @IdFestival and IdBanda = @IdBanda
+					return 100;
+					end try
+					begin catch
+					return 101;
+					end catch
+					end
+				else
+					return 102;
+				end
+			else
+				return 103;	
+			end
+		else
+			return 104;
+		end
+	else
+		return 105;
+	end
+	go
+
+
+/* Actualizar datos de Usuario */
+alter procedure updateUsuario
+		@IdUsuario int,
+		@Nombre varchar(30),
+		@Apellido1 varchar(30),
+		@Apellido2 varchar(30),
+		@Contrasena varchar(8),
+		@Estado bit,
+		@FNacimiento date,
+		@IdPais int,
+		@Ubicacion varchar(100),
+		@Universidad varchar(30),
+		@Telefono varchar(15),
+		@Foto varchar(max),
+		@Descripcion varchar(300)
+		as
+		begin
+		declare @IdRol int
+		select @IdRol = IdRol from Usuario where IdUsuario = @IdUsuario
+		if exists(select * from Usuario where IdUsuario = @IdUsuario)
+			begin
+			if @IdRol = 1
+				begin
+				/*begin try*/
+				update Usuario set Nombre = @Nombre, Apellido1 = @Apellido1, Apellido2 = @Apellido2, Contraseña = @Contrasena, Estado = @Estado  where IdUsuario = @IdUsuario
+				return 100;
+				/*end try
+				begin catch
+				return 101;
+				end catch*/
+				end
+			if @IdRol = 2
+				begin
+				/*begin try*/
+				update Usuario set Nombre = @Nombre, Apellido1 = @Apellido1, Apellido2 = @Apellido2, Contraseña = @Contrasena, Estado = @Estado where IdUsuario = @IdUsuario
+				update DetalleFanatico set Fechanacimiento = @FNacimiento, IdPais = @IdPais, Ubicacion =  @Ubicacion, Universidad = @Universidad, Telefono = @Telefono, Foto = @Foto, DescripcionPersonal = @Descripcion where IdUsuario = @IdUsuario
+				return 100;
+				/*end try
+				begin catch
+				return 101;
+				end catch*/
+				end
+			end
+		else
+			return 102;
+		end
+		go
+
+/* Desactivar una cartelera */
+create procedure desactivarCartelera
+	@IdCartelera int
+	as
+	begin
+	if exists(select * from Cartelera where IdCartelera = @IdCartelera)
+		begin
+		begin try
+		update Cartelera set Estado = 0 where IdCartelera = @IdCartelera
+		return 100;
+		end try
+		begin catch
+		return 101;
+		end catch
+		end
+	else 
+		return 102;
+	end
+	go
+
+/* Actualizar el estado de un festival */
+create procedure updateEstadoFestival
+	@IdFestival int,
+	@Estado bit
+	as
+	begin
+	if exists(select * from Festival where IdFestival = @IdFestival)
+		begin
+		begin try
+		update Festival set Estado = @Estado where IdFestival = @IdFestival
+		return 100;
+		end try
+		begin
+		catch
+		return 101;
+		end catch
+		end
+	else
+		return 102;
+	end
+	go

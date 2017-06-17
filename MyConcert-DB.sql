@@ -210,6 +210,7 @@ Create table BandaXCategoriaXCartelera (
 	IdBanda int not null
 )
 
+
 /* Tabla para el control de las votaciones */
 Create table ControlVotaciones(
 	/* Referencia al identificador de la tabla CategoriaXCartelera */
@@ -226,8 +227,6 @@ Create table ControlVotaciones(
 Create table Festival (
 	/* Identificador único autoincremental para cada Festival */
 	IdFestival int identity(1,1) primary key,
-	/* Nombre del Festival */
-	Nombre varchar(100) not null,
 	/* Detalles acerca del transporte */
 	Transporte varchar(500) not null,
 	/* Detalles acerca de la comida */
@@ -240,6 +239,18 @@ Create table Festival (
 	IdBanda int not null,
 	/* Estado del festival */
 	Estado bit not null
+)
+
+/* Bandas asignadas a una categoría asignadas a un festival */
+Create table BandaXCategoriaXFestival (
+	/* Identificador único autoincremental para el registro */
+	IdBandaXCategoriaXFestival int identity(1,1) not null,
+	/* Referencia al identificador del Festival */
+	IdFestival int not null,
+	/* Referencia al identificador de una Categoría */
+	IdCategoria int not null,
+	/* Referencia al identificador de una Banda */
+	IdBanda int not null
 )
 
 
@@ -287,7 +298,7 @@ alter table MiembroBanda
 add constraint FkMiembroBanda_Banda foreign key(IdBanda) references Banda(IdBanda)
 /**/
 alter table MiembroBanda
-add constraint UniqueMiembroXBanda unique(IdMiembroBanda, IdBanda)
+add constraint UniqueMiembroXBanda unique(Nombre, IdBanda)
 
 /*****************************************************/
 /**/
@@ -295,7 +306,7 @@ alter table Album
 add constraint FkAlbum_Banda foreign key(IdBanda) references Banda(IdBanda)
 /**/
 alter table Album
-add constraint UniqueAlbumXBanda unique(IdAlbum, IdBanda)
+add constraint UniqueAlbumXBanda unique(Nombre, IdBanda)
 
 /*****************************************************/
 /**/
@@ -370,15 +381,27 @@ add constraint UniqueVotacion unique(IdCategoriaXCartelera, IdBanda, IdUsuario)
 
 
 /*****************************************************/
-/**/
-alter table Festival
-add constraint FkFestival_Pais foreign key(IdPais) references Pais(IdPais)
+
 /**/
 alter table Festival
 add constraint FkFestival_Banda foreign key(IdBanda) references Banda(IdBanda)
 /**/
 alter table Festival
 add constraint FkFestival_Cartelera foreign key(IdCartelera) references Cartelera(IdCartelera)
+/**/
+alter table Festival
+add constraint UniqueFestivalCartelera unique(IdCartelera)
+
+/*****************************************************/
+/**/
+alter table BandaXCategoriaXFestival
+add constraint FkBandaXCategoriaXFestival_Festival foreign key(IdFestival) references Festival(IdFestival)
+/**/
+alter table BandaXCategoriaXFestival
+add constraint FkBandaXCategoriaXFestival_Categoria foreign key(IdCategoria) references Categoria(IdCategoria)
+/**/
+alter table BandaXCategoriaXFestival
+add constraint FkBandaXCategoriaXFestival_Banda foreign key(IdBanda) references Banda(IdBanda)
 
 
 
@@ -681,12 +704,4 @@ create procedure getPaisById
 
 
 
-Execute getBandaById @IdBanda = 1
 
-
-select * from Pais
-
-
-
-
-select * from Usuario
